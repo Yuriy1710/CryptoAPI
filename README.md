@@ -1,4 +1,4 @@
 # CryptoAPI
 Adminpanel: 
-    login: admin
+    login: admin,
     password: ab@12345
