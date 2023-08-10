@@ -7,8 +7,12 @@ from api.views import *
 router = DefaultRouter()
 router.register(r'customer', CustomerViewset, basename="customer")
 router.register(r'invoice', InvoiceViewset, basename="invoice")
+router.register(r'invoice-paid', InvoiceViewsetPaid, basename="invoice_paid")
+router.register(r'invoice-not-paid', InvoiceViewsetNotPaid, basename="invoice_not_paid")
+router.register(r'customer-invoice-paid', CustomerInvoicePaid, basename="customer_invoice_paid")
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include(router.urls))
+    path('', include(router.urls)),
+    path('', include('api.urls')),
 ]
