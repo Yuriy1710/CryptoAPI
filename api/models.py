@@ -1,18 +1,14 @@
 import uuid
 from django.db import models
+from django.conf import settings
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from rest_framework.authtoken.models import Token
 
-
-STATUS = [
-  (1, 'created, not paid'),
-  (2, 'created, paid'),
-  (3,'created, timeouted'),
-]
-
-CURRENCY = [
-  ('TON','toncoin'),
-  ('BTN', 'bitcoin'),
-  ('ETH', 'ethereum'),
-]
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_auth_token(sender, instance=None, created=False, **kwargs):
+    if created:
+        Token.objects.create(user=instance)
 
 
 class Customer(models.Model):
@@ -21,22 +17,37 @@ class Customer(models.Model):
     balance = models.DecimalField(max_digits=12, decimal_places=6)
     
     def __str__(self):
-        return self.name
+        return self.name + " " + str(self.id) 
     
     
     
 class Invoice(models.Model):
+    class StatusChoices(models.TextChoices):
+        CREATED_PAID = 'CP', 'Created, paid'
+        CREATED_NOT_PAID = 'CNP', 'Created, not paid'
+        CREATED_TIMEOUTED = 'CT', 'Created, timeouted'
+        
+    class CurrencyChoices(models.TextChoices):
+        TONCOIN = 'TON', 'Toncoin'
+        BITCOIN = 'BTN', 'Bitcoin'
+        ETHEREUM = 'ETN', 'Ethereum'
+ 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     sender = models.ForeignKey(Customer, related_name="sender", on_delete=models.CASCADE, blank=False, null=False)
-    receiver = models.ForeignKey(Customer, related_name="receiver", on_delete=models.CASCADE, blank=False, null=False)
+    receiver = models.ForeignKey(Customer, related_name="customer", on_delete=models.CASCADE, blank=False, null=False)
     date = models.DateTimeField(auto_now_add=True)
     network = models.CharField(max_length=250)
-    currency = models.CharField(max_length=50, choices=CURRENCY, default='TON')
-    status = models.CharField(max_length=50, choices=STATUS, default=1)
+    currency = models.CharField(max_length=50, choices=CurrencyChoices.choices, default=CurrencyChoices.TONCOIN)
+    status = models.CharField(max_length=50, choices=StatusChoices.choices, default=StatusChoices.CREATED_PAID)
     currency_amount = models.DecimalField(max_digits=12, decimal_places=6)
     cryptocurrency_amount = models.DecimalField(max_digits=12, decimal_places=6)
     transaction_id = models.CharField(max_length=250)
     
     def __str__(self):
-        return self.transaction_id, self.name
+        return self.transaction_id
+    
+    
+
+
+    
     
